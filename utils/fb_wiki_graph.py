@@ -8,7 +8,7 @@ from neo4j import GraphDatabase
 import regex as re
 from tqdm import tqdm
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 class FbWikiGraph():
     """
@@ -30,6 +30,8 @@ class FbWikiGraph():
         for rdf in tqdm(rdf_valid, desc='Creating nodes'):
             tx.run("CREATE (:Node {RDF: $rdf})", rdf=rdf)
     
+    #--------------------------------------------------------------------------
+    'Functions to Initialize and Modify Nodes + Relationships'
     # Function to process the txt files and create the graph in Neo4j
     def create_graph(self, rdf_valid: List[str]) -> None:
         driver = self.get_drive()
@@ -79,3 +81,47 @@ class FbWikiGraph():
                             url=info['URL'],
                             alias=info['Alias'])
         driver.close()
+    #--------------------------------------------------------------------------
+    'Functions to Extract Nodes'
+    def match_node(self, rdf: str) -> Dict:
+        """Returns the information of the lookup node
+        MUST BE IN RDF FORMAT: i.e.: Q76 is the RDF code for Barack Obama"""
+        assert 'Q' in rdf
+        
+        driver = self.get_drive()
+        
+        result = {}
+        with driver.session() as session:
+            query = ("MATCH (a:Node {RDF: $rdf})"
+                     "RETURN a")
+            nodes = session.run(query, rdf=rdf)
+            result = nodes.single().data()['a'] if nodes.peek() else {} 
+            
+        driver.close()
+        return result
+    
+    def match_connected(self, rdf: str) -> Tuple[List[Dict], List[Dict]]:
+        """ Returns the list of nodes and relations that are attached to the input node.
+        MUST BE IN RDF FORMAT: i.e.: Q76 is the RDF code for Barack Obama"""
+        assert 'Q' in rdf
+        
+        driver = self.get_drive()
+        
+        nodes, rels = [], []
+        with driver.session() as session:
+            query = ("MATCH (n:Node {RDF: $rdf})-[r]-(connected)"
+                     "RETURN r, connected")
+            nod_rel  = session.run(query, rdf=rdf)
+            
+            if nod_rel.peek():
+                for record in nod_rel:
+                    # Extract relationship properties
+                    rel_properties = dict(record['r'])
+                    rels.append(rel_properties)
+                    
+                    # Extract node properties
+                    node_properties = dict(record['connected'])
+                    nodes.append(node_properties)
+            
+        driver.close()
+        return nodes, rels
