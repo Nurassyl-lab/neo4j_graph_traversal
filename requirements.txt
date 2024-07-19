@@ -2,3 +2,5 @@ neo4j
 pandas
 regex
 tqdm
+requests
+beautifulsoup4
