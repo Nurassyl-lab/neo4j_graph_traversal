@@ -42,6 +42,22 @@ class FbWikiGraph():
             # Create nodes for each RDF title mapping
             session.execute_write(self.create_nodes, rdf_valid)
         driver.close()
+
+    # Function to count and display the number of nodes and edges
+    def count_nodes_edges(self) -> None:
+        driver = self.get_drive()
+
+        with driver.session() as session:
+            result_nodes = session.run("MATCH (n) RETURN COUNT(n) AS node_count")
+            result_edges = session.run("MATCH ()-[r]->() RETURN COUNT(r) AS edge_count")
+
+            node_count = result_nodes.single()["node_count"]
+            edge_count = result_edges.single()["edge_count"]
+
+            print(f"Number of nodes: {node_count}")
+            print(f"Number of edges: {edge_count}")
+
+        driver.close()
     
     def create_link_between_nodes(self, relation_map: Dict, file_name: str) -> None:
         driver = self.get_drive()
@@ -99,7 +115,8 @@ class FbWikiGraph():
             
         driver.close()
         return result
-    
+
+
     def match_connected(self, rdf: str) -> Tuple[List[Dict], List[Dict]]:
         """ Returns the list of nodes and relations that are attached to the input node.
         MUST BE IN RDF FORMAT: i.e.: Q76 is the RDF code for Barack Obama"""

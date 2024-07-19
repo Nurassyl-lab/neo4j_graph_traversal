@@ -12,14 +12,17 @@ import csv
 
 from utils.fb_wiki_graph import FbWikiGraph
 
+
 def load_json(file_path: str) -> Dict[str, str]:
     with open(file_path, 'r') as file:
         data = json.load(file)
     return data
 
+
 def load_rdf_valid(file_path: str) -> List[str]:
     return pd.read_csv(file_path)['RDF'].tolist()
-    
+
+
 # Function to load MDI to Title mapping from CSV
 def load_rdf_info_mapping(file_path: str) -> Dict:
     mapping = {}
@@ -28,7 +31,8 @@ def load_rdf_info_mapping(file_path: str) -> Dict:
         for row in reader:
             mapping[row['RDF']] = row
     return mapping
-    
+
+
 if __name__ == '__main__':
     # Constants for file paths
     RDF_MAPPING = './data/rdf_valid.csv'
