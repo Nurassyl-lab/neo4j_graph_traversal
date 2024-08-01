@@ -90,6 +90,18 @@ def test(data, epoch, prefix='Val'):
     writer.add_scalar(f'{prefix}/Hits@10', hits, epoch)
     return rank, mrr, hits
 
+# Define the test function
+@torch.no_grad()
+def test_at_1(data):
+    model.eval()
+    return model.test(
+        head_index=data.edge_index[0],
+        rel_type=data.edge_type,
+        tail_index=data.edge_index[1],
+        batch_size=20000,
+        k=1,
+    )
+
 for epoch in range(1, args.epoch_num):
     loss = train(epoch)
     print(f'Epoch: {epoch:03d}, Loss: {loss:.4f}')
@@ -105,6 +117,17 @@ print(f"Model saved to {model_path}")
 
 rank, mrr, hits_at_10 = test(test_data, epoch=args.epoch_num, prefix='Test')
 print(f'Test Mean Rank: {rank:.2f}, Test MRR: {mrr:.4f}, Test Hits@10: {hits_at_10:.4f}')
+
+# Run the test function
+_, _, hits_at_1 = test_at_1(test_data)
+print(f'Test Hits@1: {hits_at_1:.4f}')
+
+result_path = f'./results/fb_wiki/{args.model}_{args.dimension_size}.txt'
+with open(result_path, 'w') as file:
+    file.write(f'Test Mean Rank: {rank:.2f}\n')
+    file.write(f'Test MRR: {mrr:.4f}\n')
+    file.write(f'Test Hits@10: {hits_at_10:.4f}\n')
+    file.write(f'Test Hits@1: {hits_at_1:.4f}\n')
 
 # Close the TensorBoard writer
 writer.close()

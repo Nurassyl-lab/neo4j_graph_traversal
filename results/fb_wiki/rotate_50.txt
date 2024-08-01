@@ -1,0 +1,4 @@
+Test Mean Rank: 148.20
+Test MRR: 0.3084
+Test Hits@10: 0.5309
+Test Hits@1: 0.2032
